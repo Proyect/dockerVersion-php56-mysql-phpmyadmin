@@ -1,7 +1,15 @@
 FROM php:5.6-apache
 
+# Cambiar las fuentes de los repositorios a archive.debian.org y desactivar la verificación de firmas GPG
+RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list && \
+    sed -i '/stretch-updates/d' /etc/apt/sources.list && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until && \
+    echo 'Acquire::AllowInsecureRepositories "true";' >> /etc/apt/apt.conf.d/99no-check-valid-until && \
+    echo 'Acquire::AllowDowngradeToInsecureRepositories "true";' >> /etc/apt/apt.conf.d/99no-check-valid-until
+
 # Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --allow-unauthenticated \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
@@ -29,8 +37,7 @@ RUN docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-di
     mbstring \
     curl \
     json \
-    && pecl install mcrypt-1.0.3 \
-    && docker-php-ext-enable mcrypt
+    mcrypt
 
 # Habilitar mod_rewrite
 RUN a2enmod rewrite
@@ -50,4 +57,3 @@ EXPOSE 80
 
 # Comando por defecto
 CMD ["apache2-foreground"]
-
